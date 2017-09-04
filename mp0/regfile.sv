@@ -2,8 +2,8 @@ import lc3b_types::*;
 
 module regfile
 (
-    input clk,
-    input load,
+    input logic clk,
+    input logic load,
     input lc3b_word in,
     input lc3b_reg src_a, src_b, dest,
     output lc3b_word reg_a, reg_b

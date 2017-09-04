@@ -3,12 +3,11 @@ import lc3b_types::*;
 module datapath
 (
     /* control signals */
-    input logic storemux_sel,
-    input logic pcmux_sel,
     input logic load_pc,
     input logic load_ir,
     input logic load_regfile,
     input logic load_mar,
+    input logic load_mdr,
     input logic load_cc,
     input logic pcmux_sel,
     input logic storemux_sel,
@@ -20,13 +19,13 @@ module datapath
 
     /* Input Ports */
     input logic clk,
-    lc3b_word mem_rdata,
+    input lc3b_word mem_rdata,
     
     /* Output Ports */
     output lc3b_word   mem_address,
     output lc3b_word   mem_wdata,
     output logic       branch_enable,
-    output lc3b_opcode opcode,
+    output lc3b_opcode opcode
 );
 
 /* declare internal signals */
@@ -50,7 +49,7 @@ lc3b_word alu_out;
 lc3b_word pc_out;
 lc3b_word br_add_out;
 lc3b_word pc_plus2_out;
-lc3b_nzp  gencc;
+lc3b_nzp  gencc_out;
 lc3b_nzp  cc_out;
 
 
@@ -76,12 +75,12 @@ register pc
 always_comb
 begin : branch_add
     br_add_out = pc_out + adj9_out;
-end
+end : branch_add
 
 always_comb
 begin : pc_plus_two
-    pc_plus2_out = pc_out + 2;
-end
+    pc_plus2_out = pc_out + 16'h0002;
+end : pc_plus_two
 
 
 /*
@@ -94,8 +93,8 @@ ir _ir
     .in(mem_wdata),
     .opcode(opcode),
     .dest(dest),
-    .src1(src1),
-    .src2(src2),
+    .src1(sr1),
+    .src2(sr2),
     .offset6(offset6),
     .offset9(offset9)
 );
@@ -119,7 +118,7 @@ adj #(.width(9)) _adj9
 /*
  * REG FILE
  */
-module regfile
+regfile _regfile
 (
     .clk(clk),
     .load(load_regfile),
@@ -226,6 +225,6 @@ always_comb
 begin : CCCOMP
     if(cc_out == dest) branch_enable = 1;
     else branch_enable = 0;
-end
+end : CCCOMP
 
 endmodule : datapath

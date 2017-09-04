@@ -14,7 +14,7 @@ module control
     output logic      load_mdr,
     output logic      load_cc,
     output logic      pcmux_sel,
-    output logic      stroemux_sel,
+    output logic      storemux_sel,
     output logic      alumux_sel,
     output logic      regfilemux_sel,
     output logic      marmux_sel,
@@ -46,7 +46,7 @@ enum int unsigned {
     s_not,
     INVALID_OPCODE,
     INVALID_STATE
-} state, next_states;
+} state, next_state;
 
 always_comb
 begin : state_actions
@@ -175,7 +175,7 @@ begin : next_state_logic
                 default: next_state = INVALID_OPCODE;
             endcase
         end
-        s_calc_addr begin:
+        s_calc_addr: begin 
             case(opcode)
                 op_ldr:  next_state = s_ldr1;
                 op_str:  next_state = s_str1;
