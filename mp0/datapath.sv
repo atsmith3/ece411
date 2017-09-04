@@ -223,7 +223,9 @@ mux2 regfilemux
 );
 always_comb
 begin : CCCOMP
-    if(cc_out == dest) branch_enable = 1;
+    if((cc_out[2] == 1'b1 && dest[2] == 1'b1) || 
+       (cc_out[1] == 1'b1 && dest[1] == 1'b1) || 
+       (cc_out[0] == 1'b1 && dest[0] == 1'b1)) branch_enable = 1;
     else branch_enable = 0;
 end : CCCOMP
 
