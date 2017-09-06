@@ -1,6 +1,6 @@
 import lc3b_types::*;
 
-module mp0
+module mp1
 (
     input clk,
 
@@ -87,4 +87,4 @@ datapath _datapath
     .opcode(opcode)
 );
 
-endmodule : mp0
+endmodule : mp1
