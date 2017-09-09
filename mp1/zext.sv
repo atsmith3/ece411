@@ -1,7 +1,7 @@
 import lc3b_types::*;
 
 /*
- * ZEXT[offset-n]
+ * ZEXT[offset-n << 1]
  */
 module zext #(parameter width = 8)
 (
@@ -9,6 +9,6 @@ module zext #(parameter width = 8)
     output lc3b_word out
 );
 
-assign out = $unsigned({in});
+assign out = $unsigned({in,1'b0});
 
 endmodule : zext
