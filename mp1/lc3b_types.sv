@@ -3,8 +3,15 @@ package lc3b_types;
 typedef logic [15:0] lc3b_word;
 typedef logic  [7:0] lc3b_byte;
 
+typedef logic  [4:0] lc3b_imm5;
+
+typedef logic [10:0] lc3b_offset11;
 typedef logic  [8:0] lc3b_offset9;
 typedef logic  [5:0] lc3b_offset6;
+
+typedef logic lc3b_imm_bit;
+
+typedef logic  [7:0] lc3b_trapvect8;
 
 typedef logic  [2:0] lc3b_reg;
 typedef logic  [2:0] lc3b_nzp;
@@ -38,5 +45,35 @@ typedef enum bit [3:0] {
     alu_srl,
     alu_sra
 } lc3b_aluop;
+
+typedef enum bit [1:0] {
+    alumux_sr2,
+    alumux_adj6,
+    alumux_imm5
+} lc3b_alumux_sel;
+
+typedef enum bit [1:0] {
+    regfilemux_alu,
+    regfilemux_mdr,
+    regfilemux_pcoff
+} lc3b_regfilemux_sel;
+
+typedef enum bit [1:0] {
+    pcmux_pc2,
+    pcmux_pcoff,
+    pcmux_databus
+} lc3b_pcmux_sel;
+
+typedef enum bit [1:0] {
+    addr2mux_zero,
+    addr2mux_adj6,
+    addr2mux_adj9,
+    addr2mux_adj11
+} lc3b_addr2mux_sel;
+
+typedef enum bit {
+    addr1mux_pc,
+    addr1mux_sr1
+} lc3b_addr1mux_sel;
 
 endpackage : lc3b_types
