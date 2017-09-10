@@ -11,7 +11,7 @@ module datapath
     input logic               load_cc,
     input lc3b_pcmux_sel      pcmux_sel,
     input logic               storemux_sel,
-    input lc3b_alumux         alumux_sel,
+    input lc3b_alumux_sel     alumux_sel,
     input lc3b_regfilemux_sel regfilemux_sel,
     input lc3b_addr2mux_sel   addr2mux_sel,
     input lc3b_addr1mux_sel   addr1mux_sel,
@@ -43,6 +43,7 @@ lc3b_offset6 offset6;
 lc3b_offset9 offset9;
 lc3b_offset11 offset11;
 lc3b_trapvect8 trapvect8;
+lc3b_imm5 imm5;
 lc3b_word adj6_out;
 lc3b_word adj9_out;
 lc3b_word adj11_out;
@@ -93,7 +94,7 @@ mux4 addr2mux
 );
 mux2 addr1mux
 (
-    .sel(addrmux_sel),
+    .sel(addr1mux_sel),
     .a(pc_out),
     .b(sr1_out),
     .f(addr1mux_out)
@@ -170,7 +171,7 @@ regfile _regfile
     .load(load_regfile),
     .in(regfilemux_out),
     .src_a(sr1),
-    .src_b(sr2),
+    .src_b(storemux_out),
     .dest(dest),
     .reg_a(sr1_out),
     .reg_b(sr2_out)
@@ -254,7 +255,7 @@ gencc _gencc
     .in(regfilemux_out),
     .out(gencc_out)
 );
-register cc
+register #(.width(3)) cc
 (
     .clk(clk),
     .load(load_cc),

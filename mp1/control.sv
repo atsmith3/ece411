@@ -81,9 +81,8 @@ begin : state_actions
             /* MAR <= PC */
             marmux_sel = 1;
             load_mar = 1;
-			
             /* PC <= PC + 2 */
-            pcmux_sel = 0;
+            pcmux_sel = pcmux_pc2;
             load_pc = 1;
         end
         fetch2: begin
@@ -158,7 +157,7 @@ begin : state_actions
         s_jmp: begin
             /* PC <= BaseR */
             aluop = alu_pass;
-            pcmux_sel = pc_databus;
+            pcmux_sel = pcmux_databus;
         end
         s_lea: begin
             /* DR <= PC + sext(PCoffset9), setcc */

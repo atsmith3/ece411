@@ -11,4 +11,4 @@ module imm5
 
 assign out = $signed(imm5);
 
-endmodule : adj
+endmodule : imm5
