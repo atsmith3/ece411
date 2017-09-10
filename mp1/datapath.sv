@@ -170,8 +170,8 @@ regfile _regfile
     .clk(clk),
     .load(load_regfile),
     .in(regfilemux_out),
-    .src_a(sr1),
-    .src_b(storemux_out),
+    .src_a(storemux_out),
+    .src_b(sr2),
     .dest(dest),
     .reg_a(sr1_out),
     .reg_b(sr2_out)

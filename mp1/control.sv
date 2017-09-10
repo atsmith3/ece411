@@ -158,6 +158,7 @@ begin : state_actions
             /* PC <= BaseR */
             aluop = alu_pass;
             pcmux_sel = pcmux_databus;
+            load_pc = 1;
         end
         s_lea: begin
             /* DR <= PC + sext(PCoffset9), setcc */
