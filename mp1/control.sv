@@ -49,6 +49,16 @@ enum int unsigned {
     s_jmp,
     s_ret,
     s_lea,
+    s_ldi1,
+    s_ldb1,
+    s_ldb2,
+    s_stb1,
+    s_stb2,
+    s_trap1,
+    s_trap2,
+    s_trap3,
+    s_trap4,
+    s_shf,
     INVALID_OPCODE,
     INVALID_STATE
 } state, next_state;
@@ -74,13 +84,17 @@ begin : state_actions
     mem_byte_enable = 2'b11;
     addr2mux_sel = addr2mux_adj9;    
     addr1mux_sel = addr1mux_pc;
+    destmux_sel = destmux_dest;
 
     /* Actions for each state */
     case(state)
         fetch1: begin
             /* MAR <= PC */
-            marmux_sel = 1;
+            marmux_sel = marmux_pcoff;
+            addr1mux = addr1mux_pc;
+            addr2mux = addr2mux_zero;
             load_mar = 1;
+
             /* PC <= PC + 2 */
             pcmux_sel = pcmux_pc2;
             load_pc = 1;
@@ -127,8 +141,14 @@ begin : state_actions
             load_pc = 1;
         end
         s_calc_addr: begin
-            /* MAR <- A + SEXT(IR[5:0] << 1) */
-            alumux_sel = alumux_adj6;
+            if(opcode == op_ldb || opcode == op_stb) begin
+                /* MAR <- A + SEXT(IR[5:0]) */
+                alumux_sel = alumux_off6;
+            end
+            else begin
+                /* MAR <- A + SEXT(IR[5:0] << 1) */
+                alumux_sel = alumux_adj6;
+            end
             aluop = alu_add;
             load_mar = 1;
         end
@@ -164,6 +184,97 @@ begin : state_actions
             /* DR <= PC + sext(PCoffset9), setcc */
             regfilemux_sel = regfilemux_pcoff;
             load_regfile = 1;
+        end
+        s_ldb1: begin
+            /* MDR <- M[MAR] */
+            mdrmux_sel = 1;
+            mem_byte_enable = 2'b01;
+            load_mdr = 1;
+            mem_read = 1;
+        end
+        s_ldb2: begin
+            /* DR <- ZEXT(MDR) */
+            regfilemux_sel = regfilemux_mdr_zext;
+            load_regfile = 1;
+            load_cc = 1;
+        end
+        s_stb1: begin
+            /* MDR <- SR */
+            storemux_sel = 1;
+            aluop = alu_pass;
+            load_mdr = 1;
+        end
+        s_stb2: begin
+            mem_write = 1;
+            mem_byte_enable = 2'b01;
+        end
+        s_trap1: begin
+            /* R7 <- PC */
+            addr2mux_sel = addr2mux_zero;
+            addr1mux_sel = addr1mux_pc;
+            regfilemux_sel = regfilemux_pcoff;
+            destmux_sel = destmux_r7;
+            load_regfile = 1;
+        end
+        s_trap2: begin
+            /* MAR <- ZEXT(trapvect8) << 1) */
+            marmux_sel = marmux_zext8;
+            load_mar = 1;
+        end
+        s_trap3: begin
+            /* MDR <- M[MAR] */
+            mem_read = 1;
+            mdrmux_sel = 1;
+            load_mdr = 1;
+        end
+        s_trap4: begin
+            /* PC <- MDR */
+            pcmux_sel = pcmux_mdr;
+            load_pc = 1;
+        end
+        s_shf: begin
+            /* DR <- SR << or >> imm4 */
+            if(shift_flags[0] == 0) begin
+                aluop = alu_sll;
+            end
+            else begin
+                if(shift_flags[1] == 0) begin
+                    /* Shift right logic */
+                    aluop = alu_srl;
+                end
+                else begin
+                    /* Shift right signed */
+                    aluop = alu_sra;
+                end
+            end
+            load_regfile = 1;
+            alumux_sel = alumux_imm4;
+            regfilemux_sel = regfilemux_alu;
+            load_cc = 1;
+        end
+        s_jsr1: begin
+            /* R7 <- PC */
+            addr1mux_sel = addr1mux_pc;
+            addr2mux_sel = addr2mux_zero;
+            regfilemux_sel = regfilemux_pcoff;
+            load_regfile = 1;
+            destmux_sel = destmux_r7;
+        end
+        s_jsr2: begin
+            if(jsr_bit == 1) begin
+                /* PC <- PC + SEXT(PCoffset11) << 1) */
+                addr1mux_sel = addr1mux_pc;
+                addr2mux_sel = addr2mux_adj11;
+            end
+            else begin
+                /* PC <- BaseR */
+                addr1mux_sel = addr1mux_sr1;
+                addr2mux_sel = addr2mux_zero; 
+            end
+            load_pc = 1;
+        end
+        s_ldi1: begin
+
         end
         default: /* Do nothing */;
     endcase
