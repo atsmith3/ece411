@@ -8,6 +8,9 @@ module control
     input lc3b_opcode          opcode,
     input logic                branch_enable,
     input lc3b_imm_bit         imm_bit,
+    input lc3b_jsr_bit         jsr_bit,
+    input lc3b_shift_flags     shift_flags,
+    output lc3b_destmux_sel    destmux_sel,
     output logic               load_pc,
     output logic               load_ir,
     output logic               load_regfile,
@@ -19,7 +22,7 @@ module control
     output lc3b_alumux_sel     alumux_sel,
     output lc3b_regfilemux_sel regfilemux_sel,
     output lc3b_addr2mux_sel   addr2mux_sel,
-    output logic               marmux_sel,
+    output lc3b_marmux_sel     marmux_sel,
     output logic               mdrmux_sel,
     output lc3b_aluop          aluop,
     output lc3b_addr1mux_sel   addr1mux_sel,
@@ -47,9 +50,7 @@ enum int unsigned {
     s_str2,
     s_not,
     s_jmp,
-    s_ret,
     s_lea,
-    s_ldi1,
     s_ldb1,
     s_ldb2,
     s_stb1,
@@ -59,6 +60,10 @@ enum int unsigned {
     s_trap3,
     s_trap4,
     s_shf,
+    s_jsr1,
+    s_jsr2,
+    s_ind1,
+    s_ind2,
     INVALID_OPCODE,
     INVALID_STATE
 } state, next_state;
@@ -76,7 +81,7 @@ begin : state_actions
     storemux_sel = 1'b0;
     alumux_sel = alumux_sr2;
     regfilemux_sel = regfilemux_alu;
-    marmux_sel = 1'b0;
+    marmux_sel = marmux_alu;
     mdrmux_sel = 1'b0;
     aluop = alu_add;
     mem_read = 1'b0;
@@ -273,8 +278,16 @@ begin : state_actions
             end
             load_pc = 1;
         end
-        s_ldi1: begin
-
+        s_ind1: begin
+            /* MDR <- M[MAR] */
+            mdrmux_sel = 1;
+            load_mdr = 1;
+            mem_read = 1;
+        end
+        s_ind2: begin
+            /* MAR <- MDR */
+            marmux_sel = marmux_mdr;
+            load_mar = 1;
         end
         default: /* Do nothing */;
     endcase
@@ -303,6 +316,13 @@ begin : next_state_logic
                 op_and:  next_state = s_and;
                 op_ldr:  next_state = s_calc_addr;
                 op_str:  next_state = s_calc_addr;
+                op_ldi:  next_state = s_calc_addr;
+                op_sti:  next_state = s_calc_addr;
+                op_ldb:  next_state = s_calc_addr;
+                op_stb:  next_state = s_calc_addr;
+                op_shf:  next_state = s_shf;
+                op_trap: next_state = s_trap1;
+                op_jsr:  next_state = s_jsr1;
                 op_not:  next_state = s_not;
                 op_jmp:  next_state = s_jmp;
                 op_lea:  next_state = s_lea;
@@ -313,6 +333,10 @@ begin : next_state_logic
             case(opcode)
                 op_ldr:  next_state = s_ldr1;
                 op_str:  next_state = s_str1;
+                op_ldi:  next_state = s_ind1;
+                op_sti:  next_state = s_ind1;
+                op_ldb:  next_state = s_ldb1;
+                op_stb:  next_state = s_stb1;
                 default: next_state = INVALID_STATE;
             endcase
         end
@@ -351,6 +375,50 @@ begin : next_state_logic
         end
         s_lea: begin
             next_state = fetch1;
+        end
+        s_ldb1: begin
+            if(mem_resp == 0) next_state = s_ldb1;
+            else next_state = s_ldb2;
+        end
+        s_ldb2: begin
+            next_state = fetch1;
+        end
+        s_stb1: begin
+            next_state = s_stb2;
+        end
+        s_stb2: begin
+            if(mem_resp == 0) next_state = s_stb2;
+            else next_state = fetch1;
+        end
+        s_trap1: begin
+            next_state = s_trap2;
+        end
+        s_trap2: begin
+            next_state = s_trap3;
+        end
+        s_trap3: begin
+            if(mem_resp == 0) next_state = s_trap3;
+            else next_state = s_trap4;
+        end
+        s_trap4: begin
+            next_state = fetch1;
+        end
+        s_shf: begin
+            next_state = fetch1;
+        end
+        s_jsr1: begin
+            next_state = s_jsr2;
+        end
+        s_jsr2: begin
+            next_state = fetch1;
+        end
+        s_ind1: begin
+            if(mem_resp == 0) next_state = s_ind1;
+            else next_state = s_ind2;
+        end
+        s_ind2: begin
+            if(opcode == op_sti) next_state = s_str;
+            else next_state == s_ldr;
         end
         INVALID_OPCODE: begin
             next_state = INVALID_OPCODE;
