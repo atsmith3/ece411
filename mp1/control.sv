@@ -96,8 +96,8 @@ begin : state_actions
         fetch1: begin
             /* MAR <= PC */
             marmux_sel = marmux_pcoff;
-            addr1mux = addr1mux_pc;
-            addr2mux = addr2mux_zero;
+            addr1mux_sel = addr1mux_pc;
+            addr2mux_sel = addr2mux_zero;
             load_mar = 1;
 
             /* PC <= PC + 2 */
@@ -417,8 +417,8 @@ begin : next_state_logic
             else next_state = s_ind2;
         end
         s_ind2: begin
-            if(opcode == op_sti) next_state = s_str;
-            else next_state == s_ldr;
+            if(opcode == op_sti) next_state = s_str1;
+            else next_state = s_ldr1;
         end
         INVALID_OPCODE: begin
             next_state = INVALID_OPCODE;

@@ -28,7 +28,7 @@ lc3b_alumux_sel     alumux_sel;
 lc3b_regfilemux_sel regfilemux_sel;
 lc3b_addr2mux_sel   addr2mux_sel;
 lc3b_addr1mux_sel   addr1mux_sel;
-logic               marmux_sel;
+lc3b_marmux_sel     marmux_sel;
 logic               mdrmux_sel;
 lc3b_aluop          aluop;
 lc3b_imm_bit        imm_bit;

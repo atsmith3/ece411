@@ -15,7 +15,7 @@ module datapath
     input lc3b_regfilemux_sel regfilemux_sel,
     input lc3b_addr2mux_sel   addr2mux_sel,
     input lc3b_addr1mux_sel   addr1mux_sel,
-    input logic               marmux_sel,
+    input lc3b_marmux_sel     marmux_sel,
     input logic               mdrmux_sel,
     input lc3b_aluop          aluop,
     input lc3b_destmux_sel    destmux_sel,
@@ -171,7 +171,7 @@ imm5 _imm5
 );
 zext_no_shift #(.width(8)) _mdr_zext
 (
-    .in(mem_wdata),
+    .in(mem_wdata[7:0]),
     .out(mdr_zext)
 );
 
@@ -218,7 +218,7 @@ mux4 marmux
     .sel(marmux_sel),
     .a(alu_out),
     .b(br_add_out),
-    .c(zext8),
+    .c(zext8_out),
     .d(mem_wdata),
     .f(marmux_out)
 );
@@ -265,7 +265,7 @@ mux8 alumux
     .a(sr2_out),
     .b(adj6_out),
     .c(sext5_out),
-    .d(offset6),
+    .d({10'b0000000000, offset6}),
     .e({12'h000,imm4}),
     .g(16'h0000),
     .h(16'h0000),
