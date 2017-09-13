@@ -266,6 +266,7 @@ begin : state_actions
             destmux_sel = destmux_r7;
         end
         s_jsr2: begin
+		      pcmux_sel = pcmux_pcoff;
             if(jsr_bit == 1) begin
                 /* PC <- PC + SEXT(PCoffset11) << 1) */
                 addr1mux_sel = addr1mux_pc;
