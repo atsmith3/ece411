@@ -32,6 +32,9 @@ logic               marmux_sel;
 logic               mdrmux_sel;
 lc3b_aluop          aluop;
 lc3b_imm_bit        imm_bit;
+lc3b_jsr_bit        jsr_bit;
+lc3b_destmux_sel    destmux_sel;
+lc3b_shift_flags    shift_flags;
 
 control _control
 (
@@ -56,7 +59,9 @@ control _control
     .addr1mux_sel(addr1mux_sel),
     .aluop(aluop),
     .imm_bit(imm_bit),
-    
+    .jsr_bit(jsr_bit),
+    .shift_flags(shift_flags),
+    .destmux_sel(destmux_sel),
  
     /* Memory signals */
     .mem_resp(mem_resp),
@@ -84,6 +89,7 @@ datapath _datapath
     .addr2mux_sel(addr2mux_sel),
     .addr1mux_sel(addr1mux_sel),
     .imm_bit(imm_bit),
+    .destmux_sel(destmux_sel),
 
     /* Input Ports */
     .clk(clk),
@@ -93,7 +99,9 @@ datapath _datapath
     .mem_address(mem_address),
     .mem_wdata(mem_wdata),
     .branch_enable(branch_enable),
-    .opcode(opcode)
+    .opcode(opcode),
+    .jsr_bit(jsr_bit),
+    .shift_flags(shift_flags)
 );
 
 endmodule : mp1

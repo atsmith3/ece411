@@ -18,6 +18,7 @@ module datapath
     input logic               marmux_sel,
     input logic               mdrmux_sel,
     input lc3b_aluop          aluop,
+    input lc3b_destmux_sel    destmux_sel,
 
     /* Input Ports */
     input logic clk,
@@ -28,13 +29,16 @@ module datapath
     output lc3b_word    mem_wdata,
     output logic        branch_enable,
     output lc3b_opcode  opcode,
-    output lc3b_imm_bit imm_bit
+    output lc3b_imm_bit imm_bit,
+    output lc3b_jsr_bit jsr_bit,
+    output lc3b_shift_flags shift_flags
 );
 
 /* declare internal signals */
 lc3b_reg sr1;
 lc3b_reg sr2;
-lc3b_reg dest; 
+lc3b_reg dest;
+lc3b_reg destmux_out;
 lc3b_reg storemux_out;
 lc3b_word sr1_out;
 lc3b_word sr2_out;
@@ -44,10 +48,12 @@ lc3b_offset9 offset9;
 lc3b_offset11 offset11;
 lc3b_trapvect8 trapvect8;
 lc3b_imm5 imm5;
+lc3b_imm4 imm4;
 lc3b_word adj6_out;
 lc3b_word adj9_out;
 lc3b_word adj11_out;
 lc3b_word zext8_out;
+lc3b_word mdr_zext;
 lc3b_word sext5_out;
 lc3b_word pcmux_out;
 lc3b_word alumux_out;
@@ -73,7 +79,7 @@ mux4 pcmux
     .a(pc_plus2_out),
     .b(br_add_out),
     .c(alu_out),
-    .d(16'h0000),
+    .d(mem_wdata),
     .f(pcmux_out)
 );
 register pc
@@ -128,6 +134,9 @@ ir _ir
     .offset11(offset11),
     .imm5(imm5),
     .imm_bit(imm_bit),
+    .shift_flags(shift_flags),
+    .imm4(imm4),
+    .jsr_bit(jsr_bit),
     .trapvect8(trapvect8)
 );
 
@@ -160,6 +169,11 @@ imm5 _imm5
     .imm5(imm5),
     .out(sext5_out)
 );
+zext_no_shift #(.width(8)) _mdr_zext
+(
+    .in(mem_wdata),
+    .out(mdr_zext)
+);
 
 
 /*
@@ -172,14 +186,14 @@ regfile _regfile
     .in(regfilemux_out),
     .src_a(storemux_out),
     .src_b(sr2),
-    .dest(dest),
+    .dest(destmux_out),
     .reg_a(sr1_out),
     .reg_b(sr2_out)
 );
 
 
 /*
- * StoreMux
+ * StoreMux + Destmux
  */
 mux2 #(.width(3)) storemux 
 (
@@ -188,15 +202,24 @@ mux2 #(.width(3)) storemux
     .b(dest),
     .f(storemux_out)
 );
+mux2 #(.width(3)) destmux
+(
+    .sel(destmux_sel),
+    .a(dest),
+    .b(3'b111),
+    .f(destmux_out)
+);
 
 /*
  * MAR
  */ 
-mux2 marmux
+mux4 marmux
 (
     .sel(marmux_sel),
     .a(alu_out),
-    .b(pc_out),
+    .b(br_add_out),
+    .c(zext8),
+    .d(mem_wdata),
     .f(marmux_out)
 );
 register mar
@@ -236,13 +259,17 @@ alu _alu
     .b(alumux_out),
     .f(alu_out)
 );
-mux4 alumux
+mux8 alumux
 (
     .sel(alumux_sel),
     .a(sr2_out),
     .b(adj6_out),
     .c(sext5_out),
-    .d(16'h0000),
+    .d(offset6),
+    .e({12'h000,imm4}),
+    .g(16'h0000),
+    .h(16'h0000),
+    .i(16'h0000),
     .f(alumux_out)
 );
 
@@ -268,7 +295,7 @@ mux4 regfilemux
     .a(alu_out),
     .b(mem_wdata),
     .c(br_add_out),
-    .d(16'h0000),
+    .d(mdr_zext),
     .f(regfilemux_out)
 );
 always_comb

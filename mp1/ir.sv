@@ -37,10 +37,14 @@ begin
     src2 = data[2:0];
 
     imm5 = data[4:0];
+    imm4 = data[3:0];
 
     trapvect8 = data[7:0];
 
+    jsr_bit = data[11];
     imm_bit = data[5];
+
+    shift_flags = data[5:4];
 
     offset6 = data[5:0];
     offset9 = data[8:0];
