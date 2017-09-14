@@ -16,7 +16,7 @@ module datapath
     input lc3b_addr2mux_sel   addr2mux_sel,
     input lc3b_addr1mux_sel   addr1mux_sel,
     input lc3b_marmux_sel     marmux_sel,
-    input logic               mdrmux_sel,
+    input lc3b_mdrmux_sel     mdrmux_sel,
     input lc3b_aluop          aluop,
     input lc3b_destmux_sel    destmux_sel,
 
@@ -233,11 +233,13 @@ register mar
 /*
  * MDR
  */
-mux2 mdrmux
+mux4 mdrmux
 (
     .sel(mdrmux_sel),
     .a(alu_out),
     .b(mem_rdata),
+    .c({alu_out[7:0],alu_out[7:0]}),
+    .d(16'h0000),
     .f(mdrmux_out)
 );
 register mdr

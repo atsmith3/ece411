@@ -95,4 +95,9 @@ typedef enum bit {
     destmux_r7
 } lc3b_destmux_sel;
 
+typedef enum bit [1:0] {
+    mdrmux_alu,
+    mdrmux_mem_rdata,
+    mdrmux_alu_byte
+} lc3b_mdrmux_sel;
 endpackage : lc3b_types

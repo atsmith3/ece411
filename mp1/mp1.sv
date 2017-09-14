@@ -29,7 +29,7 @@ lc3b_regfilemux_sel regfilemux_sel;
 lc3b_addr2mux_sel   addr2mux_sel;
 lc3b_addr1mux_sel   addr1mux_sel;
 lc3b_marmux_sel     marmux_sel;
-logic               mdrmux_sel;
+lc3b_mdrmux_sel     mdrmux_sel;
 lc3b_aluop          aluop;
 lc3b_imm_bit        imm_bit;
 lc3b_jsr_bit        jsr_bit;

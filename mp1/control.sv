@@ -23,7 +23,7 @@ module control
     output lc3b_regfilemux_sel regfilemux_sel,
     output lc3b_addr2mux_sel   addr2mux_sel,
     output lc3b_marmux_sel     marmux_sel,
-    output logic               mdrmux_sel,
+    output lc3b_mdrmux_sel     mdrmux_sel,
     output lc3b_aluop          aluop,
     output lc3b_addr1mux_sel   addr1mux_sel,
  
@@ -83,7 +83,7 @@ begin : state_actions
     alumux_sel = alumux_sr2;
     regfilemux_sel = regfilemux_alu;
     marmux_sel = marmux_alu;
-    mdrmux_sel = 1'b0;
+    mdrmux_sel = mdrmux_alu;
     aluop = alu_add;
     mem_read = 1'b0;
     mem_write = 1'b0;
@@ -108,7 +108,7 @@ begin : state_actions
         fetch2: begin
             /* Read memory */
             mem_read = 1;
-            mdrmux_sel = 1;
+            mdrmux_sel = mdrmux_mem_rdata;
             load_mdr = 1;
         end
         fetch3: begin
@@ -160,7 +160,7 @@ begin : state_actions
         end
         s_ldr1: begin
             /* MDR <- M[MAR] */
-            mdrmux_sel = 1;
+            mdrmux_sel = mdrmux_mem_rdata;
             load_mdr = 1;
             mem_read = 1;
         end
@@ -193,7 +193,7 @@ begin : state_actions
         end
         s_ldb1: begin
             /* MDR <- M[MAR] */
-            mdrmux_sel = 1;
+            mdrmux_sel = mdrmux_mem_rdata;
             mem_byte_enable = 2'b01;
             load_mdr = 1;
             mem_read = 1;
@@ -209,6 +209,7 @@ begin : state_actions
             storemux_sel = 1;
             aluop = alu_pass;
             load_mdr = 1;
+            mdrmux_sel = mdrmux_alu_byte;
         end
         s_stb2: begin
             mem_write = 1;
@@ -231,7 +232,7 @@ begin : state_actions
         s_trap3: begin
             /* MDR <- M[MAR] */
             mem_read = 1;
-            mdrmux_sel = 1;
+            mdrmux_sel = mdrmux_mem_rdata;
             load_mdr = 1;
         end
         s_trap4: begin
@@ -283,7 +284,7 @@ begin : state_actions
         end
         s_ind1: begin
             /* MDR <- M[MAR] */
-            mdrmux_sel = 1;
+            mdrmux_sel = mdrmux_mem_rdata;
             load_mdr = 1;
             mem_read = 1;
         end
