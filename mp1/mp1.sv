@@ -64,6 +64,7 @@ control _control
     .destmux_sel(destmux_sel),
  
     /* Memory signals */
+    .mem_address(mem_address),
     .mem_resp(mem_resp),
     .mem_read(mem_read),
     .mem_write(mem_write),

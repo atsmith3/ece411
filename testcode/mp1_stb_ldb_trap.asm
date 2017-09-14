@@ -7,19 +7,19 @@ SEGMENT  CodeSegment:
     ;; zero.)
 
 
-    ADD R5, R0, 6
-    JSR SUBROUTINE
-;    LEA R1, SUBROUTINE
-;    JSRR R1
-
+    LDB R1, R0, MEM1
+    LEA R6, MEM1
+    LDB R2, R6, 1
+    ADD R3, R1, R2
+    STB R3, R6, 3
+    LDB R4, R6, 3
+    LDR R5, R0, MEM3
+    TRAP 40
+    
 HALT:                   ; Infinite loop to keep the processor
-    ADD R5, R0, 3
     BRnzp HALT          ; from trying to execute the data below.
 
-SUBROUTINE:
-    ADD R2, R0, 10
-    RSHFL R2, R2, 1
-    NOT R3, R2
-    RSHFA R3, R3, 1
-    LSHF R4, R2, 4
-    RET
+MEM1: DATA1 32
+MEM2: DATA1 64
+MEM3: DATA1 127
+MEM4: DATA1 127

@@ -29,6 +29,7 @@ module control
  
     /* Memory signals */
     input mem_resp,
+    input lc3b_word       mem_address,
     output logic          mem_read,
     output logic          mem_write,
     output lc3b_mem_wmask mem_byte_enable
@@ -211,7 +212,8 @@ begin : state_actions
         end
         s_stb2: begin
             mem_write = 1;
-            mem_byte_enable = 2'b01;
+            if(mem_address[0] == 1) mem_byte_enable = 2'b10;
+            else mem_byte_enable = 2'b01;
         end
         s_trap1: begin
             /* R7 <- PC */
