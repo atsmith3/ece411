@@ -190,6 +190,7 @@ begin : state_actions
             /* DR <= PC + sext(PCoffset9), setcc */
             regfilemux_sel = regfilemux_pcoff;
             load_regfile = 1;
+            load_cc = 1;
         end
         s_ldb1: begin
             /* MDR <- M[MAR] */
