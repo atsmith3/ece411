@@ -9,14 +9,27 @@ module cache_datapath
     input  lc3b_ctag      cache_tag,
     input  lc3b_cindex    cache_index,
     input  lc3b_coffset   cache_offset,
-    input  lc3b_c
+    input  logic          data0_write,
+    input  logic          data1_write,
+    input  logic          tag0_write,
+    input  logic          tag1_write,
+    input  logic          dirty0_write,
+    input  logic          dirty1_write,
+    input  logic          valid0_write,
+    input  logic          valid1_write,
+    input  logic          lru_write,
 
+    input  lc3b_lru_bit   lru_bit,
+    input  logic          valid_bit,
+    input  logic          dirty_bit,
+    
     output logic          lru_out,
     output logic          dirty_out0,
     output logic          dirty_out1,
+    output logic          valid_out0,
+    output logic          valid_out1,
     output logic          hit0,
     output logic          hit1,
-    output logic          
 
     /* CPU Interface */
     output lc3b_word      mem_rdata,
@@ -44,7 +57,7 @@ lc3b_ctag  tag_out0, tag_out1;
 array data0
 (
     .clk(clk),
-    .write(),
+    .write(data0_write),
     .index(cache_index),
     .datain(cache_way_data),
     .dataout(data_out0)
@@ -52,7 +65,7 @@ array data0
 array data1
 (
     .clk(clk),
-    .write(),
+    .write(data1_write),
     .index(cache_index),
     .datain(cache_way_data),
     .dataout(data_out1)
@@ -62,7 +75,7 @@ array data1
 array (.width(9)) tag0
 (
     .clk(clk),
-    .write(),
+    .write(tag0_write),
     .index(cache_index),
     .datain(cache_tag),
     .dataout(tag_out0)
@@ -70,7 +83,7 @@ array (.width(9)) tag0
 array (.width(9)) tag1
 (
     .clk(clk),
-    .write(),
+    .write(tag1_write),
     .index(cache_index),
     .datain(cache_tag),
     .dataout(tag_out1)
@@ -80,18 +93,36 @@ array (.width(9)) tag1
 array (.width(1)) dirty0
 (
     .clk(clk),
-    .write(),
+    .write(dirty0_write),
     .index(cache_index),
-    .datain(dirty_in0),
+    .datain(dirty_bit),
     .dataout(dirty_out0)
 );
 array (.width(1)) dirty1
 (
     .clk(clk),
-    .write(),
+    .write(dirty1_write),
     .index(cache_index),
-    .datain(dirty_in1),
+    .datain(dirty_bit),
     .dataout(dirty_out1)
+);
+
+/* Valid Arrays */
+array (.width(1)) valid0
+(
+    .clk(clk),
+    .write(valid0_write),
+    .index(cache_index),
+    .datain(valid_bit),
+    .dataout(valid_out0)
+);
+array (.width(1)) valid1
+(
+    .clk(clk),
+    .write(valid1_write),
+    .index(cache_index),
+    .datain(valid_bit),
+    .dataout(valid_out1)
 );
 
 /* LRU Array */
@@ -100,7 +131,7 @@ array (.width(1)) lru
     .clk(clk),
     .write(),
     .index(cache_index),
-    .datain(lru_in),
+    .datain(lru_bit),
     .dataout(lru_out)
 );
 
@@ -148,7 +179,6 @@ end
 
 
 /* LRU Logic */
-
 
 
 endmodule : cache_datapath

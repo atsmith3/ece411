@@ -5,4 +5,10 @@ typedef logic [8:0]   lc3b_ctag;
 typedef logic [2:0]   lc3b_cindex;
 typedef logic [3:0]   lc3b_coffset;
 
+typedef enum bit
+{
+    inmux_pmem,
+    inmux_cdata
+} lc3b_cache_inmux_sel;
+
 endpackage : lc3b_ctypes
