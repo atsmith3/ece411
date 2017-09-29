@@ -9,6 +9,8 @@ module cache_datapath
     input  lc3b_ctag      cache_tag,
     input  lc3b_cindex    cache_index,
     input  lc3b_coffset   cache_offset,
+    input  lc3b_cache_inmux_sel inmux_sel,
+    input  lc3b_cache_hitmux_sel hitmux_sel,
     input  logic          data0_write,
     input  logic          data1_write,
     input  logic          tag0_write,
@@ -138,7 +140,7 @@ array (.width(1)) lru
 /* Input Data Logic */
 mux2 (.width(128)) cache_input_mux
 (
-    .sel(cache_inmux_sel),
+    .sel(inmux_sel),
     .a(pmem_rdata),
     .b(cache_wite_data),
     .f(cache_way_data)
@@ -159,7 +161,7 @@ cache_modify_data cmd
 /* Output Data Logic */
 mux2 (.width(128)) cache_hitmux
 (
-    .sel(cache_hitmux_sel),
+    .sel(hitmux_sel),
     .a(data_out1),
     .b(data_out0),
     .f(pmem_wdata)

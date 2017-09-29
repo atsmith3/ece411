@@ -11,4 +11,10 @@ typedef enum bit
     inmux_cdata
 } lc3b_cache_inmux_sel;
 
+typedef enum bit
+{
+    hitmux_way0,
+    hitmux_way1
+} lc3b_cache_hitmux_sel;
+
 endpackage : lc3b_ctypes
