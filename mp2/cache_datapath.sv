@@ -166,7 +166,13 @@ mux2 (.width(128)) cache_hitmux
     .b(data_out0),
     .f(pmem_wdata)
 );
-
+cache_output_word cow
+(
+    .cache_offset(cache_offset),
+    .mem_byte_enable(mem_byte_enable),
+    .l_in(pmem_wdata),
+    .w_out(mem_rdata),
+);
 
 /* Tag Logic */
 always_comb
