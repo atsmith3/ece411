@@ -135,7 +135,11 @@ begin
    case(state)
        /* Cache Idle */
        c_idle: begin
-           
+           if(mem_read == 1'b1 && ((hit0 == 1'b1 && valid0 == 1'b1) || (hit1 == 1'b1 && valid1 == 1'b1)) next_state = c_read;
+           if(mem_write == 1'b1 && ((hit0 == 1'b1 && valid0 == 1'b1) || (hit1 == 1'b1 && valid1 == 1'b1)) next_state = c_write;
+           if((mem_read == 1'b1 || mem_write == 1'b1) && hit0 == 1'b0 && hit1 == 1'b0)
+
+
        end
        /* Cache Read on Hit */
        c_read: begin
@@ -158,7 +162,7 @@ begin
        end
        /* State for debugging */
        INVALID_STATE: begin
-           
+          next_state = INVALID_STATE; 
        end 
 end
 
