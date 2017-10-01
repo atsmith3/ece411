@@ -100,6 +100,7 @@ begin
    mem_resp = 0;
    pmem_read = 0;
    pmem_write = 0;
+   pmem_address = {mem_address[15:4], 4'b0000};
 
    case(state)
        /* Cache Idle */
@@ -108,27 +109,76 @@ begin
        end
        /* Cache Read on Hit */
        c_read: begin
-       
+           /* Read the line from the cache + Update LRU */
+           inmux_sel = inmux_cdata;
+           mem_resp = 1;
+           if(hit0 == 1) begin
+               lru_write = 1;
+               lru_bit = 1;
+               hitmux_sel = hitmux_way0;
+           end
+           if(hit1 == 1) begin
+               lru_write = 1;
+               lru_bit = 0;             
+               hitmux_sel = hitmux_way1; 
+           end      
        end
        /* Cache Write on Hit */
        c_write: begin
            /* Write the line back to the cache + Update LRU, Dirty, Valid */
            inmux_sel = inmux_cdata;
+           mem_resp = 1;
            if(hit0 == 1) begin
                data0_write = 1;
                dirty0_write = 1;
                dirty_bit = 1;
-               valid0_write = 1;
-               
+               lru_write = 1;
+               lru_bit = 1;
+               hitmux_sel = hitmux_way0;
+           end
+           if(hit1 == 1) begin
+               data1_write = 1;
+               dirty1_write = 1;
+               dirty_bit = 1;
+               lru_write = 1;
+               lru_bit = 0;             
+               hitmux_sel = hitmux_way1; 
            end
        end
        /* Cache Evict on Dirty == 1 && Valid == 1 && No Hits */
        c_evict: begin
-
+           if(lru_out == 0) begin
+               hitmux_sel = hitmux_way0;
+               pmem_address = {tag_out0, cache_index, 4'h0};
+           end
+           else begin
+               hitmux_sel = hitmux_way1;
+               pmem_address = {tag_out1, cache_index, 4'h0};
+           end
+           pmem_write = 1;
        end
        /* Fetch new line if Dirty == 0 && No Hits */
        c_fetch: begin
-
+           inmux_sel = inmux_pmem;
+           pmem_address = {mem_address[15:4], 4'h0};
+           if(lru_out == 0) begin
+               /* Bring the new line into way0 */
+               data0_write = 1;
+               tag0_write = 1;
+               valid0_write = 1;
+               dirty0_write = 1;
+               valid_bit = 1;
+               dirty_bit = 0;
+           end
+           else begin
+               data1_write = 1;
+               tag1_write = 1;
+               valid1_write = 1;
+               dirty1_write = 1;
+               valid_bit = 1;
+               dirty_bit = 0;
+           end
+           pmem_read = 1;
        end
        /* State for debugging */
        INVALID_STATE: begin
