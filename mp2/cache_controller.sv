@@ -112,7 +112,15 @@ begin
        end
        /* Cache Write on Hit */
        c_write: begin
-
+           /* Write the line back to the cache + Update LRU, Dirty, Valid */
+           inmux_sel = inmux_cdata;
+           if(hit0 == 1) begin
+               data0_write = 1;
+               dirty0_write = 1;
+               dirty_bit = 1;
+               valid0_write = 1;
+               
+           end
        end
        /* Cache Evict on Dirty == 1 && Valid == 1 && No Hits */
        c_evict: begin
@@ -135,30 +143,66 @@ begin
    case(state)
        /* Cache Idle */
        c_idle: begin
-           if(mem_read == 1'b1 && ((hit0 == 1'b1 && valid0 == 1'b1) || (hit1 == 1'b1 && valid1 == 1'b1)) next_state = c_read;
-           if(mem_write == 1'b1 && ((hit0 == 1'b1 && valid0 == 1'b1) || (hit1 == 1'b1 && valid1 == 1'b1)) next_state = c_write;
-           if((mem_read == 1'b1 || mem_write == 1'b1) && hit0 == 1'b0 && hit1 == 1'b0)
-
-
+           /* Default */
+           next_state = c_idle;
+           /* Hit and valid data */
+           if(mem_read == 1'b1 && 
+             ((hit0 == 1'b1 && valid0 == 1'b1) || 
+             (hit1 == 1'b1 && valid1 == 1'b1)) begin
+               next_state = c_read;
+           end
+           if(mem_write == 1'b1 && 
+             ((hit0 == 1'b1 && valid0 == 1'b1) || 
+             (hit1 == 1'b1 && valid1 == 1'b1)) begin
+                next_state = c_write;
+           end
+           /* Hit but invalid data */
+           if(mem_read == 1'b1 && 
+             ((hit0 == 1'b1 && valid0 == 1'b0) || 
+             (hit1 == 1'b1 && valid1 == 1'b0)) begin
+               next_state = c_fetch;
+           end
+           if(mem_write == 1'b1 && 
+             ((hit0 == 1'b1 && valid0 == 1'b0) || 
+             (hit1 == 1'b1 && valid1 == 1'b0)) begin
+                next_state = c_fetch;
+           end
+           /* No hit and dirty valid data */
+           if((mem_read == 1'b1 || mem_write == 1'b1) && 
+             hit0 == 1'b0 && hit1 == 1'b0 && 
+             ((lru_out == 0 && valid_out0 == 1 && dirty_out0 == 1) ||
+             (lru_out == 1 && valid_out1 == 1 && dirty_out1 == 1))) begin
+                next_state = c_evict;
+           end
+           /* No hit and clean data */
+           if((mem_read == 1'b1 || mem_write == 1'b1) && 
+             hit0 == 1'b0 && hit1 == 1'b0 && 
+             ((lru_out == 0 && valid_out0 == 1 && dirty_out0 == 0) ||
+             (lru_out == 1 && valid_out1 == 1 && dirty_out1 == 0))) begin
+                next_state = c_fetch;
+           end
        end
        /* Cache Read on Hit */
        c_read: begin
-       
+           next_state = c_idle;
        end
        /* Cache Write on Hit */
        c_write: begin
-
+           next_state = c_idle;
        end
        /* Cache Evict on Dirty == 1 && Valid == 1 && No Hits */
        c_evict: begin
-           next_state = c_fetch;
+           if(pmem_resp == 1) next_state = c_fetch;
+           else next_state = c_evict;
        end
        /* Fetch new line if Dirty == 0 && No Hits */
        c_fetch: begin
-           if(mem_write == 1'b1) next_state = c_write;
-           else if(mem_read  == 1'b1) next_state = c_read;
-           else next_state = INVALID_STATE;
-           
+           if(pmem_resp == 1) begin
+               if(mem_write == 1'b1) next_state = c_write;
+               else if(mem_read  == 1'b1) next_state = c_read;
+               else next_state = INVALID_STATE;
+           end
+           else next_state = c_fetch;
        end
        /* State for debugging */
        INVALID_STATE: begin
