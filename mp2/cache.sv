@@ -38,6 +38,7 @@ logic                 valid0_write, valid1_write;
 logic                 lru_write;
 logic                 lru_bit, valid_bit, dirty_bit;
 logic                 lru_out;
+lc3b_ctag             tag_out0, tag_out1;
 logic                 dirty_out0, dirty_out1;
 logic                 valid_out0, valid_out1;
 logic                 hit0, hit1;
@@ -71,6 +72,8 @@ cache_datapath c_d_path
     .dirty_out1(dirty_out1),
     .valid_out0(valid_out0),
     .valid_out1(valid_out1),
+    .tag_out0(tag_out0),
+    .tag_out1(tag_out1),
     .hit0(hit0),
     .hit1(hit1),
     
@@ -80,13 +83,10 @@ cache_datapath c_d_path
     .mem_read(mem_read),
     .mem_write(mem_write),
     .mem_byte_enable(mem_byte_enable),
-    .mem_resp(mem_resp),
 
     .pmem_address(pmem_address),
     .pmem_rdata(pmem_rdata),
     .pmem_wdata(pmem_wdata),
-    .pmem_read(pmem_read),
-    .pmem_write(pmem_write),
     .pmem_resp(pmem_resp)
 );
 
@@ -119,6 +119,8 @@ cache_controller c_controller
     .dirty_out1(dirty_out1),
     .valid_out0(valid_out0),
     .valid_out1(valid_out1),
+    .tag_out0(tag_out0),
+    .tag_out1(tag_out1),
     .hit0(hit0),
     .hit1(hit1),
 

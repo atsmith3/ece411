@@ -30,6 +30,8 @@ module cache_controller
     input  logic          dirty_out1,
     input  logic          valid_out0,
     input  logic          valid_out1,
+    input  lc3b_ctag      tag_out0,
+    input  lc3b_ctag      tag_out1,
     input  logic          hit0,
     input  logic          hit1,
 
@@ -197,24 +199,24 @@ begin
            next_state = c_idle;
            /* Hit and valid data */
            if(mem_read == 1'b1 && 
-             ((hit0 == 1'b1 && valid0 == 1'b1) || 
-             (hit1 == 1'b1 && valid1 == 1'b1)) begin
+             ((hit0 == 1'b1 && valid_out0 == 1'b1) || 
+             (hit1 == 1'b1 && valid_out1 == 1'b1))) begin
                next_state = c_read;
            end
            if(mem_write == 1'b1 && 
-             ((hit0 == 1'b1 && valid0 == 1'b1) || 
-             (hit1 == 1'b1 && valid1 == 1'b1)) begin
+             ((hit0 == 1'b1 && valid_out0 == 1'b1) || 
+             (hit1 == 1'b1 && valid_out1 == 1'b1))) begin
                 next_state = c_write;
            end
            /* Hit but invalid data */
            if(mem_read == 1'b1 && 
-             ((hit0 == 1'b1 && valid0 == 1'b0) || 
-             (hit1 == 1'b1 && valid1 == 1'b0)) begin
+             ((hit0 == 1'b1 && valid_out0 == 1'b0) || 
+             (hit1 == 1'b1 && valid_out1 == 1'b0))) begin
                next_state = c_fetch;
            end
            if(mem_write == 1'b1 && 
-             ((hit0 == 1'b1 && valid0 == 1'b0) || 
-             (hit1 == 1'b1 && valid1 == 1'b0)) begin
+             ((hit0 == 1'b1 && valid_out0 == 1'b0) || 
+             (hit1 == 1'b1 && valid_out1 == 1'b0))) begin
                 next_state = c_fetch;
            end
            /* No hit and dirty valid data */
@@ -257,13 +259,14 @@ begin
        /* State for debugging */
        INVALID_STATE: begin
           next_state = INVALID_STATE; 
-       end 
+       end
+    endcase 
 end
 
 /* State = Next State */
 always_ff @ (posedge clk)
-begin : next_state_assignment
+begin
     state <= next_state;
-end : next_state_assignment
+end
 
 endmodule : cache_controller

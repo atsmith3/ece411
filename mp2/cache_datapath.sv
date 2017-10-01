@@ -30,30 +30,29 @@ module cache_datapath
     output logic          dirty_out1,
     output logic          valid_out0,
     output logic          valid_out1,
+    output lc3b_ctag      tag_out0,
+    output lc3b_ctag      tag_out1,
     output logic          hit0,
     output logic          hit1,
 
     /* CPU Interface */
+    input  lc3b_word      mem_address,
     output lc3b_word      mem_rdata,
     input  lc3b_word      mem_wdata,
     input  logic          mem_read,
     input  logic          mem_write,
     input  lc3b_mem_wmask mem_byte_enable,
-    output logic          mem_resp,
 
 
     /* Memory Interface */
-    output lc3b_word      pmem_address,
     input  lc3b_cline     pmem_rdata,
     output lc3b_cline     pmem_wdata,
-    output logic          pmem_read,
-    output logic          pmem_write,
     input  logic          pmem_resp
 );
 
 /* Internal Logic Signals */
 lc3b_cline data_out0, data_out1;
-lc3b_ctag  tag_out0, tag_out1;
+lc3b_cline cache_write_data, cache_way_data;
 
 /* Data Ways */
 array data0
@@ -74,7 +73,7 @@ array data1
 );
 
 /* Tag Ways */
-array (.width(9)) tag0
+array #(.width(9)) tag0
 (
     .clk(clk),
     .write(tag0_write),
@@ -82,7 +81,7 @@ array (.width(9)) tag0
     .datain(cache_tag),
     .dataout(tag_out0)
 );
-array (.width(9)) tag1
+array #(.width(9)) tag1
 (
     .clk(clk),
     .write(tag1_write),
@@ -92,7 +91,7 @@ array (.width(9)) tag1
 );
 
 /* Dirty Bit Ways */
-array (.width(1)) dirty0
+array #(.width(1)) dirty0
 (
     .clk(clk),
     .write(dirty0_write),
@@ -100,7 +99,7 @@ array (.width(1)) dirty0
     .datain(dirty_bit),
     .dataout(dirty_out0)
 );
-array (.width(1)) dirty1
+array #(.width(1)) dirty1
 (
     .clk(clk),
     .write(dirty1_write),
@@ -110,7 +109,7 @@ array (.width(1)) dirty1
 );
 
 /* Valid Arrays */
-array (.width(1)) valid0
+array #(.width(1)) valid0
 (
     .clk(clk),
     .write(valid0_write),
@@ -118,7 +117,7 @@ array (.width(1)) valid0
     .datain(valid_bit),
     .dataout(valid_out0)
 );
-array (.width(1)) valid1
+array #(.width(1)) valid1
 (
     .clk(clk),
     .write(valid1_write),
@@ -128,7 +127,7 @@ array (.width(1)) valid1
 );
 
 /* LRU Array */
-array (.width(1)) lru
+array #(.width(1)) lru
 (
     .clk(clk),
     .write(),
@@ -138,11 +137,11 @@ array (.width(1)) lru
 );
 
 /* Input Data Logic */
-mux2 (.width(128)) cache_input_mux
+mux2 #(.width(128)) cache_input_mux
 (
     .sel(inmux_sel),
     .a(pmem_rdata),
-    .b(cache_wite_data),
+    .b(cache_write_data),
     .f(cache_way_data)
 );
 
@@ -159,7 +158,7 @@ cache_modify_data cmd
 
 
 /* Output Data Logic */
-mux2 (.width(128)) cache_hitmux
+mux2 #(.width(128)) cache_hitmux
 (
     .sel(hitmux_sel),
     .a(data_out1),
@@ -171,7 +170,7 @@ cache_output_word cow
     .cache_offset(cache_offset),
     .mem_byte_enable(mem_byte_enable),
     .l_in(pmem_wdata),
-    .w_out(mem_rdata),
+    .w_out(mem_rdata)
 );
 
 /* Tag Logic */
