@@ -15,12 +15,12 @@ begin
     /* If the 0th bit of the offset is 1, just read
      * the byte into the w_out with {8'h00,M[offset]}.
      * Else read the entire word into the output register. */
-/*    if(cache_offset[0] == 1) begin
-        w_out = {8'h00,l_in[((cache_offset+1)*8):(cache_offset*8)]};
-    end
-    else begin
-        w_out = l_in[((cache_offset+2)*8):(cache_offset*8)];
-    end*/
+    //if(cache_offset[0] == 1) begin
+    //    w_out = {8'h00,l_in[cache_offset*8 +: 8]};
+    //end
+    //else begin
+        w_out = l_in[{cache_offset[3:1],1'b0}*8 +: 16];
+    //end
 end
 
 endmodule : cache_output_word
