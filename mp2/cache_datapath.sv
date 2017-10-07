@@ -145,7 +145,7 @@ cache_modify_data cmd
     .mem_byte_enable(mem_byte_enable),
     .d_in_lsb(mem_wdata[7:0]),
     .d_in_msb(mem_wdata[15:8]),
-    .l_in(pmem_wdata),
+    .l_in(data_line_out),
     .l_out(cache_write_data)
 );
 
