@@ -43,7 +43,7 @@ datapath _datapath
     .if_address(address_a),
     .if_wdata(wdata_a),
     .if_resp(resp_a),
-	 .if_rdata(rdata_a)
+	 .if_rdata(rdata_a),
     
     /* MEM Signals */
     .mem_read(read_b),
