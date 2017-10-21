@@ -1,15 +1,25 @@
+import lc3b_types::*;
+
 module zam_lc3_tb;
 
 timeunit 1ns;
 timeprecision 1ns;
 
 logic clk;
-logic pmem_resp;
-logic pmem_read;
-logic pmem_write;
-logic [15:0] pmem_address;
-logic [127:0] pmem_rdata;
-logic [127:0] pmem_wdata;
+logic read_a;
+logic write_a;
+logic lc3b_mem_wmask wmask_a;
+logic lc3b_word address_a;
+logic lc3b_word wdata_a;
+logic resp_a;
+logic lc3b_word rdata_a;
+logic read_b;
+logic write_b;
+logic lc3b_mem_wmask wmask_b;
+logic lc3b_word address_b;
+logic lc3b_word wdata_b;
+logic resp_b;
+logic lc3b_word rdata_b;
 
 /* Clock generator */
 initial clk = 0;
@@ -18,23 +28,39 @@ always #5 clk = ~clk;
 zam_lc3 dut
 (
     .clk,
-    .pmem_resp,
-    .pmem_rdata,
-    .pmem_read,
-    .pmem_write,
-    .pmem_address,
-    .pmem_wdata
+    .read_a,
+    .write_a,
+    .wmask_a,
+    .address_a,
+    .wdata_a,
+    .resp_a,
+    .rdata_a,
+    .read_b,
+    .write_b,
+    .wmask_b,
+    .address_b,
+    .wdata_b,
+    .resp_b,
+    .rdata_b,
 );
 
-physical_memory memory
+magic_memory_dp memory
 (
     .clk,
-    .read(pmem_read),
-    .write(pmem_write),
-    .address(pmem_address),
-    .wdata(pmem_wdata),
-    .resp(pmem_resp),
-    .rdata(pmem_rdata)
+    .read_a(read_a),
+    .write_a(write_a),
+    .wmask_a(wmask_a),
+    .address_a(address_a),
+    .wdata_a(wdata_a),
+    .resp_a(resp_a),
+	 .rdata_a(rdata_a),
+	 .read_b(read_b),
+    .write_b(write_b),
+    .wmask_b(wmask_b),
+    .address_b(address_b),
+    .wdata_b(wdata_b),
+    .resp_b(resp_b),
+	 .rdata_b(rdata_b)
 );
 
 endmodule : zam_lc3_tb
