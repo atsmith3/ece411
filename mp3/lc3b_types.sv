@@ -20,6 +20,31 @@ typedef logic  [2:0] lc3b_reg;
 typedef logic  [2:0] lc3b_nzp;
 typedef logic  [1:0] lc3b_mem_wmask;
 
+typedef struct packed {
+    lc3b_opcode opcode;
+    lc3b_aluop aluop;
+    logic load_cc;
+    logic load_regfile;
+    /* add to me */
+} lc3b_control_word;
+
+typedef struct packed {
+    lc3b_reg dest;
+    lc3b_reg src1; 
+    lc3b_reg src2;
+    lc3b_imm5 imm5,
+    lc3b_imm_bit imm_bit,
+    lc3b_imm4 imm4,
+    lc3b_shift_flags shift_flags,
+    lc3b_jsr_bit jsr_bit,
+    lc3b_trapvect8 trapvect8,
+    lc3b_offset6 offset6,
+    lc3b_offset9 offset9,
+    lc3b_offset11 offset11
+    lc3b_word adj6, adj9, adj11,
+    lc3b_word zext8, sext5, mdr_zext
+} lc3b_ir_signals;
+
 typedef enum bit [3:0] {
     op_add  = 4'b0001,
     op_and  = 4'b0101,

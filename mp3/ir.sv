@@ -16,6 +16,8 @@ module ir
     output lc3b_offset6 offset6,
     output lc3b_offset9 offset9,
     output lc3b_offset11 offset11
+    output lc3b_word adj6, adj9, adj11,
+    output lc3b_word zext8, sext5, mdr_zext
 );
 
 lc3b_word data;
@@ -27,6 +29,37 @@ begin
         data = in;
     end
 end
+
+adj #(.width(6)) _adj6
+(
+    .in(offset6),
+    .out(adj6)
+);
+adj #(.width(9)) _adj9
+(
+    .in(offset9),
+    .out(adj9)
+);
+adj #(.width(11)) _adj11
+(
+    .in(offset11),
+    .out(adj11)
+);
+zext #(.width(8)) _zext8
+(
+    .in(trapvect8),
+    .out(zext8)
+);
+imm5 _imm5
+(
+    .imm5(imm5),
+    .out(sext5)
+);
+zext_no_shift #(.width(8)) _mdr_zext
+(
+    .in(mem_wdata[7:0]),
+    .out(mdr_zext)
+);
 
 always_comb
 begin

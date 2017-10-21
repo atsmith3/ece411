@@ -2,8 +2,11 @@ import lc3b_types::*;
 
 module datapath
 (
+    
+);
+
     /* control signals */
-    input logic               load_pc,
+/**    input logic               load_pc,
     input logic               load_ir,
     input logic               load_regfile,
     input logic               load_mar,
@@ -18,21 +21,20 @@ module datapath
     input lc3b_marmux_sel     marmux_sel,
     input lc3b_mdrmux_sel     mdrmux_sel,
     input lc3b_aluop          aluop,
-    input lc3b_destmux_sel    destmux_sel,
+    input lc3b_destmux_sel    destmux_sel,*/
 
     /* Input Ports */
-    input logic clk,
-    input lc3b_word mem_rdata,
+/*    input logic clk,
+    input lc3b_word mem_rdata,*/
     
     /* Output Ports */
-    output lc3b_word    mem_address,
+/*    output lc3b_word    mem_address,
     output lc3b_word    mem_wdata,
     output logic        branch_enable,
     output lc3b_opcode  opcode,
     output lc3b_imm_bit imm_bit,
     output lc3b_jsr_bit jsr_bit,
-    output lc3b_shift_flags shift_flags
-);
+    output lc3b_shift_flags shift_flags*/
 
 /* declare internal signals */
 lc3b_reg sr1;
@@ -69,6 +71,15 @@ lc3b_word addr2mux_out;
 lc3b_nzp  gencc_out;
 lc3b_nzp  cc_out;
 
+
+
+
+
+/* -----------------------------------------------------------
+   -----------------------------------------------------------
+                       INSTRUCTION FETCH
+   -----------------------------------------------------------
+   -----------------------------------------------------------*/
 
 /*
  * PC
@@ -144,38 +155,20 @@ ir _ir
 /*
  * ADJ
  */
-adj #(.width(6)) _adj6
+
+
+/* Stage Regs */
+register #(.width($bits(lc3b_control_word))) control_word_reg_idex
 (
-    .in(offset6),
-    .out(adj6_out)
-);
-adj #(.width(9)) _adj9
-(
-    .in(offset9),
-    .out(adj9_out)
-);
-adj #(.width(11)) _adj11
-(
-    .in(offset11),
-    .out(adj11_out)
-);
-zext #(.width(8)) _zext8
-(
-    .in(trapvect8),
-    .out(zext8_out)
-);
-imm5 _imm5
-(
-    .imm5(imm5),
-    .out(sext5_out)
-);
-zext_no_shift #(.width(8)) _mdr_zext
-(
-    .in(mem_wdata[7:0]),
-    .out(mdr_zext)
+
 );
 
 
+/* -----------------------------------------------------------
+   -----------------------------------------------------------
+                       INSTRUCTION DECODE
+   -----------------------------------------------------------
+   -----------------------------------------------------------*/
 /*
  * REG FILE
  */
@@ -210,6 +203,65 @@ mux2 #(.width(3)) destmux
     .f(destmux_out)
 );
 
+
+/* Stage Regs */
+register #(.width($bits(lc3b_control_word))) control_word_reg_idex
+(
+
+);
+register #(.width(16)) source_operand_a
+(
+    
+);
+register source_operand_b
+(
+    
+);
+
+
+
+/* -----------------------------------------------------------
+   -----------------------------------------------------------
+                       EXECUTE
+   -----------------------------------------------------------
+   -----------------------------------------------------------*/
+/*
+ * ALU
+ */
+alu _alu
+(
+    .aluop(aluop),
+    .a(sr1_out),
+    .b(alumux_out),
+    .f(alu_out)
+);
+mux8 alumux
+(
+    .sel(alumux_sel),
+    .a(sr2_out),
+    .b(adj6_out),
+    .c(sext5_out),
+    .d({10'b0000000000, offset6}),
+    .e({12'h000,imm4}),
+    .g(16'h0000),
+    .h(16'h0000),
+    .i(16'h0000),
+    .f(alumux_out)
+);
+
+/* Stage Regs */
+register #(.width($bits(lc3b_control_word))) control_word_reg_idex
+(
+
+);
+
+
+
+/* -----------------------------------------------------------
+   -----------------------------------------------------------
+                       MEM
+   -----------------------------------------------------------
+   -----------------------------------------------------------*/
 /*
  * MAR
  */ 
@@ -251,61 +303,20 @@ register mdr
 );
 
 
-/*
- * ALU
- */
-alu _alu
+/* Stage Regs */
+register #(.width($bits(lc3b_control_word))) control_word_reg_idex
 (
-    .aluop(aluop),
-    .a(sr1_out),
-    .b(alumux_out),
-    .f(alu_out)
-);
-mux8 alumux
-(
-    .sel(alumux_sel),
-    .a(sr2_out),
-    .b(adj6_out),
-    .c(sext5_out),
-    .d({10'b0000000000, offset6}),
-    .e({12'h000,imm4}),
-    .g(16'h0000),
-    .h(16'h0000),
-    .i(16'h0000),
-    .f(alumux_out)
+
 );
 
 
-/*
- * CC
- */
-gencc _gencc
-(
-    .in(regfilemux_out),
-    .out(gencc_out)
-);
-register #(.width(3)) cc
-(
-    .clk(clk),
-    .load(load_cc),
-    .in(gencc_out),
-    .out(cc_out)
-);
-mux4 regfilemux
-(
-    .sel(regfilemux_sel),
-    .a(alu_out),
-    .b(mem_wdata),
-    .c(br_add_out),
-    .d(mdr_zext),
-    .f(regfilemux_out)
-);
-always_comb
-begin : CCCOMP
-    if((cc_out[2] == 1'b1 && dest[2] == 1'b1) || 
-       (cc_out[1] == 1'b1 && dest[1] == 1'b1) || 
-       (cc_out[0] == 1'b1 && dest[0] == 1'b1)) branch_enable = 1;
-    else branch_enable = 0;
-end : CCCOMP
+/* -----------------------------------------------------------
+   -----------------------------------------------------------
+                       WRITEBACK
+   -----------------------------------------------------------
+   -----------------------------------------------------------*/
+
+
+
 
 endmodule : datapath
