@@ -2,7 +2,29 @@ import lc3b_types::*;
 
 module datapath
 (
+    input logic clk,
+
+    /* Control Signals */
+    output lc3b_opcode opcode,
+    input lc3b_control_word control_word,
+
+    /* IF Signals */
+    output logic          if_read,       // Assign 1
+    output logic          if_write,      // Assign 0
+    output lc3b_mem_wmask if_wmask,      // Assign 2'b11
+    output lc3b_word      if_address,    // PC
+    output lc3b_word      if_wdata,      // 16'h0000
+    input  logic          if_resp,       // Loads IR
+    input  lc3b_word      if_rdata,      // Instruction
     
+    /* MEM Signals */
+    output logic          mem_read,
+    output logic          mem_write,
+    output lc3b_mem_wmask mem_wmask,
+    output lc3b_word      mem_address,
+    output lc3b_word      mem_wdata,
+    input  logic          mem_resp,
+    input  lc3b_word      mem_rdata
 );
 
     /* control signals */
@@ -71,8 +93,18 @@ lc3b_word addr2mux_out;
 lc3b_nzp  gencc_out;
 lc3b_nzp  cc_out;
 
+// IR Signals for Each Statge
+lc3b_ir_signals ir_signals;
+lc3b_ir_signals ir_signals_ID;
+lc3b_ir_signals ir_signals_EX;
+lc3b_ir_signals ir_signals_MEM;
+lc3b_ir_signals ir_signals_WB;
 
-
+// Control Words for Each Statge
+lc3b_control_word control_word_ID;
+lc3b_control_word control_word_EX;
+lc3b_control_word control_word_MEM;
+lc3b_control_word control_word_WB;
 
 
 /* -----------------------------------------------------------
@@ -134,34 +166,24 @@ end : pc_plus_two
 ir _ir
 (
     .clk(clk),
-    .load(load_ir),
-    .in(mem_wdata),
-    .opcode(opcode),
-    .dest(dest),
-    .src1(sr1),
-    .src2(sr2),
-    .offset6(offset6),
-    .offset9(offset9),
-    .offset11(offset11),
-    .imm5(imm5),
-    .imm_bit(imm_bit),
-    .shift_flags(shift_flags),
-    .imm4(imm4),
-    .jsr_bit(jsr_bit),
-    .trapvect8(trapvect8)
+    .load(if_resp),
+    .in(if_rdata),
+    .opcode(ir_signals.opcode),
+    .dest(ir_signals.dest),
+    .src1(ir_signals.sr1),
+    .src2(ir_signals.sr2),
+    .imm_bit(ir_signals.imm_bit),
+    .shift_flags(ir_signals.shift_flags),
+    .imm4(ir_signals.imm4),
+    .jsr_bit(ir_signals.jsr_bit),
+    .adj6(ir_signals.adj6),
+    .adj9(ir_signals.adj9),
+    .adj11(ir_signals.adj11),
+    .zext8(ir_signals.zext8),
+    .sext5(ir_signals.sext5),
+    .mdr_zext(ir_signals.mdr_zext),
 );
 
-
-/*
- * ADJ
- */
-
-
-/* Stage Regs */
-register #(.width($bits(lc3b_control_word))) control_word_reg_idex
-(
-
-);
 
 
 /* -----------------------------------------------------------
@@ -175,7 +197,7 @@ register #(.width($bits(lc3b_control_word))) control_word_reg_idex
 regfile _regfile
 (
     .clk(clk),
-    .load(load_regfile),
+    .load(load_regfile),   // WB statge
     .in(regfilemux_out),
     .src_a(storemux_out),
     .src_b(sr2),
@@ -190,15 +212,15 @@ regfile _regfile
  */
 mux2 #(.width(3)) storemux 
 (
-    .sel(storemux_sel),
-    .a(sr1),
-    .b(dest),
+    .sel(control_word.storemux_sel),
+    .a(ir_signals_ID.sr1),
+    .b(ir_signals_ID.dest),
     .f(storemux_out)
 );
 mux2 #(.width(3)) destmux
 (
-    .sel(destmux_sel),
-    .a(dest),
+    .sel(control_word.destmux_sel),
+    .a(ir_signals_ID.dest),
     .b(3'b111),
     .f(destmux_out)
 );
@@ -207,17 +229,32 @@ mux2 #(.width(3)) destmux
 /* Stage Regs */
 register #(.width($bits(lc3b_control_word))) control_word_reg_idex
 (
-
+    .clk(clk),
+    .load(1'b1),
+    .in(control_word),
+    .out(control_word_EX),
 );
-register #(.width(16)) source_operand_a
+register #(.width(16)) source_operand_a_idex
 (
-    
+    .clk(),
+    .load(),
+    .in(),
+    .out()
 );
-register source_operand_b
+register #(.width(16)) source_operand_b_idex
 (
-    
+    .clk(),
+    .load(),
+    .in(),
+    .out()   
 );
-
+register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_idex
+(
+    .clk(),
+    .load(),
+    .in(),
+    .out()
+);
 
 
 /* -----------------------------------------------------------
@@ -250,12 +287,27 @@ mux8 alumux
 );
 
 /* Stage Regs */
-register #(.width($bits(lc3b_control_word))) control_word_reg_idex
+register #(.width($bits(lc3b_control_word))) control_word_reg_exmem
 (
-
+    .clk(),
+    .load(),
+    .in(),
+    .out()
 );
-
-
+register #(.width(16)) reg_alu_out
+(
+    .clk(),
+    .load(),
+    .in(),
+    .out()
+);
+register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_exmem
+(
+    .clk(),
+    .load(),
+    .in(),
+    .out()
+);
 
 /* -----------------------------------------------------------
    -----------------------------------------------------------
@@ -304,11 +356,20 @@ register mdr
 
 
 /* Stage Regs */
-register #(.width($bits(lc3b_control_word))) control_word_reg_idex
+register #(.width($bits(lc3b_control_word))) control_word_reg_memwb
 (
-
+    .clk(),
+    .load(),
+    .in(),
+    .out()
 );
-
+register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_memwb
+(
+    .clk(),
+    .load(),
+    .in(),
+    .out()
+);
 
 /* -----------------------------------------------------------
    -----------------------------------------------------------

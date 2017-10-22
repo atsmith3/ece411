@@ -34,15 +34,15 @@ typedef struct packed {
     lc3b_reg src2;
     lc3b_imm5 imm5,
     lc3b_imm_bit imm_bit,
-    lc3b_imm4 imm4,
+    lc3b_word imm4,
     lc3b_shift_flags shift_flags,
     lc3b_jsr_bit jsr_bit,
-    lc3b_trapvect8 trapvect8,
-    lc3b_offset6 offset6,
-    lc3b_offset9 offset9,
-    lc3b_offset11 offset11
-    lc3b_word adj6, adj9, adj11,
-    lc3b_word zext8, sext5, mdr_zext
+    lc3b_word adj6, 
+    lc3b_word adj9,
+    lc3b_word adj11,
+    lc3b_word zext8, 
+    lc3b_word sext5,
+    lc3b_word mdr_zext
 } lc3b_ir_signals;
 
 typedef enum bit [3:0] {

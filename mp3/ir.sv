@@ -7,20 +7,21 @@ module ir
     input lc3b_word in,
     output lc3b_opcode opcode,
     output lc3b_reg dest, src1, src2,
-    output lc3b_imm5 imm5,
-    output lc3b_imm_bit imm_bit,
-    output lc3b_imm4 imm4,
-    output lc3b_shift_flags shift_flags,
     output lc3b_jsr_bit jsr_bit,
-    output lc3b_trapvect8 trapvect8,
-    output lc3b_offset6 offset6,
-    output lc3b_offset9 offset9,
-    output lc3b_offset11 offset11
+    output lc3b_imm_bit imm_bit,
+    output lc3b_shift_flags shift_flags,
+    output lc3b_word imm4,
     output lc3b_word adj6, adj9, adj11,
     output lc3b_word zext8, sext5, mdr_zext
 );
 
 lc3b_word data;
+
+lc3b_imm5 imm5;
+lc3b_trapvect8 trapvect8;
+lc3b_offset6 offset6;
+lc3b_offset9 offset9;
+lc3b_offset11 offset11;
 
 always_ff @(posedge clk)
 begin
@@ -70,7 +71,7 @@ begin
     src2 = data[2:0];
 
     imm5 = data[4:0];
-    imm4 = data[3:0];
+    imm4 = {12'h000, data[3:0]};
 
     trapvect8 = data[7:0];
 
