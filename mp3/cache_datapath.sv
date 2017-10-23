@@ -48,6 +48,7 @@ lc3b_cline data_out0, data_out1;
 lc3b_cline cache_write_data, cache_way_data;
 lc3b_cline data_line_out;
 lc3b_ctag  tag_out0, tag_out1;
+logic valid_out0, valid_out1;
 
 /* Data Ways */
 array data0

@@ -10,10 +10,10 @@ module ir
     output lc3b_jsr_bit jsr_bit,
     output lc3b_imm_bit imm_bit,
     output lc3b_shift_flags shift_flags,
-    output lc3b_word offset6;
+    output lc3b_word offset6,
     output lc3b_word imm4,
     output lc3b_word adj6, adj9, adj11,
-    output lc3b_word zext8, sext5, mdr_zext
+    output lc3b_word zext8, sext5
 );
 
 lc3b_word data;
@@ -55,11 +55,6 @@ imm5 _imm5
 (
     .imm5(imm5),
     .out(sext5)
-);
-zext_no_shift #(.width(8)) _mdr_zext
-(
-    .in(mem_wdata[7:0]),
-    .out(mdr_zext)
 );
 
 always_comb

@@ -22,14 +22,18 @@ module zam_lc3
     input lc3b_word rdata_b
 );
 
-lc3b_control_word ccontrol_word;
+lc3b_control_word control_word;
 lc3b_opcode opcode;
+lc3b_imm_bit imm;
+lc3b_jsr_bit jsr;
 
 /* Control Rom */
 control_rom _control_rom
 (
     .opcode(opcode),
-    .control_word(control_word)
+    .imm(imm),
+    .jsr(jsr),
+    .ctrl(control_word)
 );
 
 /* Datapath */
@@ -39,6 +43,8 @@ datapath _datapath
 
     /* Control Signals */
     .opcode(opcode),
+    .imm(imm),
+    .jsr(jsr),
     .control_word(control_word),
 
     /* IF Signals */

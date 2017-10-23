@@ -5,7 +5,7 @@ module regfile
     input logic clk,
     input logic load,
     input lc3b_word in,
-    input lc3b_reg src_a, src_b, dest, source_idx
+    input lc3b_reg src_a, src_b, dest, source_idx,
     output lc3b_word reg_a, reg_b, source_data
 );
 

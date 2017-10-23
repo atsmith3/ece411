@@ -23,27 +23,33 @@ typedef logic  [1:0] lc3b_mem_wmask;
 typedef struct packed {
     lc3b_opcode opcode;
     lc3b_aluop aluop;
+    lc3b_memmux_sel memmux_sel;
+    lc3b_alumux_sel alumux_sel;
+    lc3b_aluoutmux_sel aluoutmux_sel;
+    lc3b_destmux_sel destmux_sel;
     logic load_cc;
     logic load_regfile;
-    /* add to me */
+    logic mem_read;
+    logic mem_write;
+    lc3b_mem_wmask mem_wmask;
 } lc3b_control_word;
 
 typedef struct packed {
+    lc3b_opcode opcode;
     lc3b_reg dest;
     lc3b_reg src1; 
     lc3b_reg src2;
-    lc3b_imm5 imm5,
-    lc3b_imm_bit imm_bit,
-    lc3b_word imm4,
-    lc3b_shift_flags shift_flags,
-    lc3b_jsr_bit jsr_bit,
-    lc3b_word adj6, 
+    lc3b_imm5 imm5;
+    lc3b_imm_bit imm_bit;
+    lc3b_word imm4;
+    lc3b_shift_flags shift_flags;
+    lc3b_jsr_bit jsr_bit;
+    lc3b_word adj6;
     lc3b_word offset6;
-    lc3b_word adj9,
-    lc3b_word adj11,
-    lc3b_word zext8, 
-    lc3b_word sext5,
-    lc3b_word mdr_zext
+    lc3b_word adj9;
+    lc3b_word adj11;
+    lc3b_word zext8; 
+    lc3b_word sext5;
 } lc3b_ir_signals;
 
 typedef enum bit [3:0] {
@@ -64,13 +70,6 @@ typedef enum bit [3:0] {
     op_str  = 4'b0111,
     op_trap = 4'b1111
 } lc3b_opcode;
-
-typedef enum bit [1:0] {
-    marmux_alu,
-    marmux_pcoff,
-    marmux_zext8,
-    marmux_mdr
-} lc3b_marmux_sel;
 
 typedef enum bit [3:0] {
     alu_add,
@@ -122,8 +121,14 @@ typedef enum bit {
 } lc3b_destmux_sel;
 
 typedef enum bit [1:0] {
-    memmux_,
-    mdrmux_rdata,
-    mdrmux_
+    memmux_result,
+    memmux_rdata,
+    memmux_rdata_byte
 } lc3b_memmux_sel;
+
+typedef enum bit {
+    aluoutmux_word,
+    aluoutmux_byte
+} lc3b_aluoutmux_sel;
+
 endpackage : lc3b_types
