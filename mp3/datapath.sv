@@ -27,63 +27,11 @@ module datapath
     input  lc3b_word      mem_rdata
 );
 
-    /* control signals */
-/**    input logic               load_pc,
-    input logic               load_ir,
-    input logic               load_regfile,
-    input logic               load_mar,
-    input logic               load_mdr,
-    input logic               load_cc,
-    input lc3b_pcmux_sel      pcmux_sel,
-    input logic               storemux_sel,
-    input lc3b_alumux_sel     alumux_sel,
-    input lc3b_regfilemux_sel regfilemux_sel,
-    input lc3b_addr2mux_sel   addr2mux_sel,
-    input lc3b_addr1mux_sel   addr1mux_sel,
-    input lc3b_marmux_sel     marmux_sel,
-    input lc3b_mdrmux_sel     mdrmux_sel,
-    input lc3b_aluop          aluop,
-    input lc3b_destmux_sel    destmux_sel,*/
-
-    /* Input Ports */
-/*    input logic clk,
-    input lc3b_word mem_rdata,*/
-    
-    /* Output Ports */
-/*    output lc3b_word    mem_address,
-    output lc3b_word    mem_wdata,
-    output logic        branch_enable,
-    output lc3b_opcode  opcode,
-    output lc3b_imm_bit imm_bit,
-    output lc3b_jsr_bit jsr_bit,
-    output lc3b_shift_flags shift_flags*/
-
 /* declare internal signals */
-lc3b_reg sr1;
-lc3b_reg sr2;
-lc3b_reg dest;
 lc3b_reg destmux_out;
-lc3b_reg storemux_out;
-lc3b_word sr1_out;
-lc3b_word sr2_out;
 
-lc3b_offset6 offset6;
-lc3b_offset9 offset9;
-lc3b_offset11 offset11;
-lc3b_trapvect8 trapvect8;
-lc3b_imm5 imm5;
-lc3b_imm4 imm4;
-lc3b_word adj6_out;
-lc3b_word adj9_out;
-lc3b_word adj11_out;
-lc3b_word zext8_out;
-lc3b_word mdr_zext;
-lc3b_word sext5_out;
 lc3b_word pcmux_out;
 lc3b_word alumux_out;
-lc3b_word regfilemux_out;
-lc3b_word marmux_out;
-lc3b_word mdrmux_out;
 lc3b_word alu_out;
 lc3b_word pc_out;
 lc3b_word br_add_out;
@@ -92,6 +40,13 @@ lc3b_word addr1mux_out;
 lc3b_word addr2mux_out;
 lc3b_nzp  gencc_out;
 lc3b_nzp  cc_out;
+logic     branch_enable;
+
+// Pipelined Signals:
+lc3b_word source_data, source_EX, source_MEM;
+lc3b_word operand_a, operand_b;
+lc3b_word result_MEM;
+lc3b_word mem_result, writeback_data;
 
 // IR Signals for Each Statge
 lc3b_ir_signals ir_signals;
@@ -106,32 +61,50 @@ lc3b_control_word control_word_EX;
 lc3b_control_word control_word_MEM;
 lc3b_control_word control_word_WB;
 
+// Load Signals for Each Stage
+logic load_ifid;
+logic load_idex;
+logic load_exmem;
+logic load_memwb;
+
+
+always_comb begin
+    // Default:
+    load_ifid = 0;
+    load_idex = 0;
+    load_exmem = 0;
+    load_memwb = 0;
+
+    if(if_resp & mem_resp) begin
+        load_ifid = 1;
+        load_idex = 1;
+        load_exmem = 1;
+        load_memwb = 1;
+    end
+end
 
 /* -----------------------------------------------------------
    -----------------------------------------------------------
                        INSTRUCTION FETCH
    -----------------------------------------------------------
    -----------------------------------------------------------*/
-
-/*
- * PC
- */
-mux4 pcmux
+/*mux4 pcmux
 (
-    .sel(pcmux_sel),
+    .sel(1'b0),
     .a(pc_plus2_out),
     .b(br_add_out),
     .c(alu_out),
     .d(mem_wdata),
     .f(pcmux_out)
-);
+);*/
 register pc
 (
     .clk,
-    .load(load_pc),
-    .in(pcmux_out),
+    .load(load_ifid),
+    .in(pc_plus_two),
     .out(pc_out)
 );
+/*
 mux4 addr2mux
 (
     .sel(addr2mux_sel),
@@ -152,13 +125,18 @@ mux2 addr1mux
 always_comb
 begin : branch_add
     br_add_out = addr1mux_out + addr2mux_out;
-end : branch_add
+end : branch_add*/
 
 always_comb
 begin : pc_plus_two
     pc_plus2_out = pc_out + 16'h0002;
 end : pc_plus_two
 
+assign if_address = pc_out;
+assign if_write = 1'b0;
+assign if_read = 1'b1;
+assign if_wmask = 2'b11;
+assign opcode = ir_signals.opcode;
 
 /*
  * IR
@@ -166,7 +144,7 @@ end : pc_plus_two
 ir _ir
 (
     .clk(clk),
-    .load(if_resp),
+    .load(load_ifid),
     .in(if_rdata),
     .opcode(ir_signals.opcode),
     .dest(ir_signals.dest),
@@ -176,6 +154,7 @@ ir _ir
     .shift_flags(ir_signals.shift_flags),
     .imm4(ir_signals.imm4),
     .jsr_bit(ir_signals.jsr_bit),
+    .offset6(ir_signals.offset6),
     .adj6(ir_signals.adj6),
     .adj9(ir_signals.adj9),
     .adj11(ir_signals.adj11),
@@ -197,30 +176,23 @@ ir _ir
 regfile _regfile
 (
     .clk(clk),
-    .load(load_regfile),   // WB statge
-    .in(regfilemux_out),
-    .src_a(storemux_out),
-    .src_b(sr2),
+    .load(control_word_WB.load_regfile),   // WB statge
+    .in(writeback_data),
+    .src_a(ir_signals.sr1),
+    .src_b(ir_signals.sr2),
     .dest(destmux_out),
+    .source_idx(ir_signals.dest),
+    .source_data(source_data),
     .reg_a(sr1_out),
     .reg_b(sr2_out)
 );
 
 
-/*
- * StoreMux + Destmux
- */
-mux2 #(.width(3)) storemux 
-(
-    .sel(control_word.storemux_sel),
-    .a(ir_signals_ID.sr1),
-    .b(ir_signals_ID.dest),
-    .f(storemux_out)
-);
+
 mux2 #(.width(3)) destmux
 (
-    .sel(control_word.destmux_sel),
-    .a(ir_signals_ID.dest),
+    .sel(control_word_WB.destmux_sel),
+    .a(ir_signals_WB.dest),
     .b(3'b111),
     .f(destmux_out)
 );
@@ -230,30 +202,37 @@ mux2 #(.width(3)) destmux
 register #(.width($bits(lc3b_control_word))) control_word_reg_idex
 (
     .clk(clk),
-    .load(1'b1),
+    .load(load_idex),
     .in(control_word),
     .out(control_word_EX),
 );
 register #(.width(16)) source_operand_a_idex
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_idex),
+    .in(sr1_out),
+    .out(operand_a)
 );
 register #(.width(16)) source_operand_b_idex
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()   
+    .clk(clk),
+    .load(load_idex),
+    .in(sr2_out),
+    .out(operand_b)   
+);
+register #(.width(16)) source_reg_idex
+(
+    .clk(clk),
+    .load(load_idex),
+    .in(source_data),
+    .out(source_EX)
 );
 register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_idex
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_idex),
+    .in(ir_signals),
+    .out(ir_signals_EX),
 );
 
 
@@ -267,19 +246,19 @@ register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_idex
  */
 alu _alu
 (
-    .aluop(aluop),
-    .a(sr1_out),
+    .aluop(control_word_EX.aluop),
+    .a(operand_a),
     .b(alumux_out),
     .f(alu_out)
 );
 mux8 alumux
 (
-    .sel(alumux_sel),
-    .a(sr2_out),
-    .b(adj6_out),
-    .c(sext5_out),
-    .d({10'b0000000000, offset6}),
-    .e({12'h000,imm4}),
+    .sel(control_word_EX.alumux_sel),
+    .a(operand_b),
+    .b(ir_signals_EX.adj6),
+    .c(ir_signals_EX.sext5),
+    .d(ir_signals_EX.offset6),
+    .e(ir_signals_EX.imm4),
     .g(16'h0000),
     .h(16'h0000),
     .i(16'h0000),
@@ -289,24 +268,38 @@ mux8 alumux
 /* Stage Regs */
 register #(.width($bits(lc3b_control_word))) control_word_reg_exmem
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_exmem),
+    .in(control_word_EX),
+    .out(control_word_MEM)
 );
-register #(.width(16)) reg_alu_out
+mux2 #(.width(16)) aluout_mux
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .sel(aluoutmux_sel),
+    .a(alu_out),
+    .b({alu_out[7:0],alu_out[7:0]}),
+    .f(result_EX)
+)
+register #(.width(16)) alu_result
+(
+    .clk(clk),
+    .load(load_exmem),
+    .in(result_EX),
+    .out(result_MEM)
+);
+register #(.width(16)) source_data
+(
+    .clk(clk),
+    .load(alu_out),
+    .in(source_EX),
+    .out(source_MEM)
 );
 register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_exmem
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_exmem),
+    .in(ir_signals_EX),
+    .out(ir_signals_MEM)
 );
 
 /* -----------------------------------------------------------
@@ -314,61 +307,45 @@ register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_exmem
                        MEM
    -----------------------------------------------------------
    -----------------------------------------------------------*/
-/*
- * MAR
- */ 
-mux4 marmux
-(
-    .sel(marmux_sel),
-    .a(alu_out),
-    .b(br_add_out),
-    .c(zext8_out),
-    .d(mem_wdata),
-    .f(marmux_out)
-);
-register mar
-(
-    .clk(clk),
-    .load(load_mar),
-    .in(marmux_out),
-    .out(mem_address)
-);
 
-/*
- * MDR
- */
-mux4 mdrmux
+assign mem_address = result_MEM;
+assign mem_wdata = source_MEM;
+assign mem_write = control_word_MEM.mem_write;
+assign mem_read = control_word_MEM.mem_read;
+assign mem_wmask = control_word_MEM.mem_wmask;
+
+mux4 (.width(16)) memmux
 (
-    .sel(mdrmux_sel),
-    .a(alu_out),
+    .sel(ir_signals_MEM.memmux_sel),
+    .a(result_MEM),
     .b(mem_rdata),
-    .c({alu_out[7:0],alu_out[7:0]}),
-    .d(16'h0000),
-    .f(mdrmux_out)
-);
-register mdr
-(
-    .clk(clk),
-    .load(load_mdr),
-    .in(mdrmux_out),
-    .out(mem_wdata)
-);
+    .c({8'h00,mem_rdata[7:0]}),
+    .d(16h'0000),
+    .f(mem_result)
+)
 
 
 /* Stage Regs */
 register #(.width($bits(lc3b_control_word))) control_word_reg_memwb
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_memwb),
+    .in(control_word_MEM),
+    .out(control_word_WB),
+);
+register #(.width(16)) mem_result
+(
+    .clk(clk),
+    .load(load_memwb),
+    .in(mem_result),
+    .out(writeback_data)
 );
 register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_memwb
 (
-    .clk(),
-    .load(),
-    .in(),
-    .out()
+    .clk(clk),
+    .load(load_memwb),
+    .in(ir_signals_MEM),
+    .out(ir_signals_WB)
 );
 
 /* -----------------------------------------------------------
@@ -377,7 +354,28 @@ register #(.width($bits(lc3b_ir_signals))) ir_signals_reg_memwb
    -----------------------------------------------------------
    -----------------------------------------------------------*/
 
+/*
+ * CC
+ */
+gencc _gencc
+(
+    .in(writeback_data),
+    .out(gencc_out)
+);
+register #(.width(3)) cc
+(
+    .clk(clk),
+    .load(control_word_WB.load_cc),
+    .in(gencc_out),
+    .out(cc_out)
+);
 
-
+always_comb
+begin : CCCOMP
+    if((cc_out[2] == 1'b1 && ir_signals.dest[2] == 1'b1) || 
+       (cc_out[1] == 1'b1 && ir_signals.dest[1] == 1'b1) || 
+       (cc_out[0] == 1'b1 && ir_signals.dest[0] == 1'b1)) branch_enable = 1;
+    else branch_enable = 0;
+end : CCCOMP
 
 endmodule : datapath

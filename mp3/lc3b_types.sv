@@ -38,6 +38,7 @@ typedef struct packed {
     lc3b_shift_flags shift_flags,
     lc3b_jsr_bit jsr_bit,
     lc3b_word adj6, 
+    lc3b_word offset6;
     lc3b_word adj9,
     lc3b_word adj11,
     lc3b_word zext8, 
@@ -121,8 +122,8 @@ typedef enum bit {
 } lc3b_destmux_sel;
 
 typedef enum bit [1:0] {
-    mdrmux_alu,
-    mdrmux_mem_rdata,
-    mdrmux_alu_byte
-} lc3b_mdrmux_sel;
+    memmux_,
+    mdrmux_rdata,
+    mdrmux_
+} lc3b_memmux_sel;
 endpackage : lc3b_types

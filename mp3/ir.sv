@@ -10,6 +10,7 @@ module ir
     output lc3b_jsr_bit jsr_bit,
     output lc3b_imm_bit imm_bit,
     output lc3b_shift_flags shift_flags,
+    output lc3b_word offset6;
     output lc3b_word imm4,
     output lc3b_word adj6, adj9, adj11,
     output lc3b_word zext8, sext5, mdr_zext
@@ -19,7 +20,6 @@ lc3b_word data;
 
 lc3b_imm5 imm5;
 lc3b_trapvect8 trapvect8;
-lc3b_offset6 offset6;
 lc3b_offset9 offset9;
 lc3b_offset11 offset11;
 
@@ -33,7 +33,7 @@ end
 
 adj #(.width(6)) _adj6
 (
-    .in(offset6),
+    .in(offset6[5:0]),
     .out(adj6)
 );
 adj #(.width(9)) _adj9
@@ -79,8 +79,7 @@ begin
     imm_bit = data[5];
 
     shift_flags = data[5:4];
-
-    offset6 = data[5:0];
+    offset6 = $signed(data[5:0]);
     offset9 = data[8:0];
     offset11 = data[10:0];
 end
